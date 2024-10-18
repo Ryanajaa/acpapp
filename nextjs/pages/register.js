@@ -1,192 +1,187 @@
 import React, { useState } from "react";
-import { TextField, Button, Grid, Typography, Paper, Snackbar, Alert } from '@mui/material';
+import { TextField, Button, Typography, Box, Snackbar, Alert } from "@mui/material";
+import { styled } from '@mui/system';
+import { useRouter } from "next/router";
+import Image from 'next/image';
 
+const RegisterContainer = styled(Box)(({ theme }) => ({
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center',
+  minHeight: '80vh',
+  backgroundColor: 'white',
+  padding: theme.spacing(2),
+  paddingTop: '5vh',
+}));
 
-export default function AuthPage() {
- const [loginEmail, setLoginEmail] = useState('');
- const [loginPassword, setLoginPassword] = useState('');
- const [registerName, setRegisterName] = useState('');
- const [registerEmail, setRegisterEmail] = useState('');
- const [registerPassword, setRegisterPassword] = useState('');
- const [registerConfirmPassword, setRegisterConfirmPassword] = useState('');
- const [openSnackbar, setOpenSnackbar] = useState(false);
- const [snackbarMessage, setSnackbarMessage] = useState('');
- const [snackbarSeverity, setSnackbarSeverity] = useState('success');
+const StyledTextField = styled(TextField)({
+  '& .MuiOutlinedInput-root': {
+    borderRadius: '20px',
+    backgroundColor: '#E6F2FF',
+    '& fieldset': {
+      borderColor: 'transparent',
+    },
+    '&:hover fieldset': {
+      borderColor: 'transparent',
+    },
+    '&.Mui-focused fieldset': {
+      borderColor: 'transparent',
+    },
+  },
+  '& .MuiInputLabel-root': {
+    color: '#83A9CB',
+  },
+});
 
+const StyledButton = styled(Button)({
+  borderRadius: '20px',
+  backgroundColor: '#8FBFF8',
+  color: 'white',
+  padding: '12px',
+  '&:hover': {
+    backgroundColor: '#7AAEE7',
+  },
+});
 
- const handleSnackbarClose = () => {
-   setOpenSnackbar(false);
- };
+export default function RegisterPage() {
+  const router = useRouter();
+  const [registerName, setRegisterName] = useState("");
+  const [registerEmail, setRegisterEmail] = useState("");
+  const [registerPassword, setRegisterPassword] = useState("");
+  const [registerConfirmPassword, setRegisterConfirmPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [openSnackbar, setOpenSnackbar] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState("");
+  const [snackbarSeverity, setSnackbarSeverity] = useState("success");
 
+  const handleSnackbarClose = () => {
+    setOpenSnackbar(false);
+  };
 
- const handleLoginSubmit = async (e) => {
-   e.preventDefault();
-   try {
-     const response = await fetch('/api/users/login', {
-       method: 'POST',
-       headers: {
-         'Content-Type': 'application/json',
-       },
-       body: JSON.stringify({
-         email: loginEmail,
-         password_hash: loginPassword,
-       }),
-     });
+  // Navigate to Sign In page
+  const handleNavigateToSignIn = () => {
+    router.push("/signin");
+  };
 
+  const handleRegisterSubmit = async (e) => {
+    e.preventDefault();
+    if (registerPassword !== registerConfirmPassword) {
+      setSnackbarMessage("Passwords do not match");
+      setSnackbarSeverity("error");
+      setOpenSnackbar(true);
+      return;
+    }
 
-     if (!response.ok) {
-       const errorData = await response.json();
-       throw new Error(errorData.detail || 'Login failed');
-     }
+    setLoading(true);
+    try {
+      const response = await fetch("/api/users/create", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          username: registerName,
+          email: registerEmail,
+          password_hash: registerPassword,
+        }),
+      });
 
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || "Registration failed");
+      }
 
-     const data = await response.json();
-     setSnackbarMessage('Login successful!');
-     setSnackbarSeverity('success');
-     setOpenSnackbar(true);
-     // Handle successful login (e.g., redirect)
-   } catch (error) {
-     setSnackbarMessage(error.message);
-     setSnackbarSeverity('error');
-     setOpenSnackbar(true);
-   }
- };
+      setSnackbarMessage("Registration successful!");
+      setSnackbarSeverity("success");
+      setOpenSnackbar(true);
 
+      // Redirect to Sign In page after successful registration
+      router.push("/signin");
+    } catch (error) {
+      setSnackbarMessage(error.message);
+      setSnackbarSeverity("error");
+      setOpenSnackbar(true);
+    } finally {
+      setLoading(false);
+    }
+  };
 
- const handleRegisterSubmit = async (e) => {
-   e.preventDefault();
-   if (registerPassword !== registerConfirmPassword) {
-     setSnackbarMessage('Passwords do not match');
-     setSnackbarSeverity('error');
-     setOpenSnackbar(true);
-     return;
-   }
-
-
-   try {
-     const response = await fetch('/api/users/create', {
-       method: 'POST',
-       headers: {
-         'Content-Type': 'application/json',
-       },
-       body: JSON.stringify({
-         username: registerName,
-         email: registerEmail,
-         password_hash: registerPassword,
-       }),
-     });
-
-
-     if (!response.ok) {
-       const errorData = await response.json();
-       throw new Error(errorData.detail || 'Registration failed');
-     }
-
-
-     const data = await response.json();
-     setSnackbarMessage('Registration successful!');
-     setSnackbarSeverity('success');
-     setOpenSnackbar(true);
-     // Handle successful registration (e.g., redirect)
-   } catch (error) {
-     setSnackbarMessage(error.message);
-     setSnackbarSeverity('error');
-     setOpenSnackbar(true);
-   }
- };
-
-
- return (
-   <Grid container spacing={2} style={{ height: '100vh', justifyContent: 'center', alignItems: 'center' }}>
-     {/* Login Section */}
-     <Grid item xs={12} sm={6}>
-       <Paper elevation={3} style={{ padding: '20px' }}>
-         <Typography variant="h5" gutterBottom>
-           Login
-         </Typography>
-         <form onSubmit={handleLoginSubmit}>
-           <TextField
-             fullWidth
-             label="Email"
-             variant="outlined"
-             margin="normal"
-             type="email"
-             value={loginEmail}
-             onChange={(e) => setLoginEmail(e.target.value)}
-           />
-           <TextField
-             fullWidth
-             label="Password"
-             variant="outlined"
-             margin="normal"
-             type="password"
-             value={loginPassword}
-             onChange={(e) => setLoginPassword(e.target.value)}
-           />
-           <Button variant="contained" color="primary" fullWidth style={{ marginTop: '16px' }} type="submit">
-             Login
-           </Button>
-         </form>
-       </Paper>
-     </Grid>
-
-
-     {/* Register Section */}
-     <Grid item xs={12} sm={6}>
-       <Paper elevation={3} style={{ padding: '20px' }}>
-         <Typography variant="h5" gutterBottom>
-           Register
-         </Typography>
-         <form onSubmit={handleRegisterSubmit}>
-           <TextField
-             fullWidth
-             label="Name"
-             variant="outlined"
-             margin="normal"
-             value={registerName}
-             onChange={(e) => setRegisterName(e.target.value)}
-           />
-           <TextField
-             fullWidth
-             label="Email"
-             variant="outlined"
-             margin="normal"
-             type="email"
-             value={registerEmail}
-             onChange={(e) => setRegisterEmail(e.target.value)}
-           />
-           <TextField
-             fullWidth
-             label="Password"
-             variant="outlined"
-             margin="normal"
-             type="password"
-             value={registerPassword}
-             onChange={(e) => setRegisterPassword(e.target.value)}
-           />
-           <TextField
-             fullWidth
-             label="Confirm Password"
-             variant="outlined"
-             margin="normal"
-             type="password"
-             value={registerConfirmPassword}
-             onChange={(e) => setRegisterConfirmPassword(e.target.value)}
-           />
-           <Button variant="contained" color="primary" fullWidth style={{ marginTop: '16px' }} type="submit">
-             Register
-           </Button>
-         </form>
-       </Paper>
-     </Grid>
-
-
-     {/* Snackbar for notifications */}
-     <Snackbar open={openSnackbar} autoHideDuration={6000} onClose={handleSnackbarClose}>
-       <Alert onClose={handleSnackbarClose} severity={snackbarSeverity} sx={{ width: '100%' }}>
-         {snackbarMessage}
-       </Alert>
-     </Snackbar>
-   </Grid>
- );
+  return (
+    <RegisterContainer>
+      <Box display="flex" flexDirection="column" alignItems="center" mb={4}>
+        <Box sx={{ width: 100, height: 100, marginBottom: 2, position: 'relative' }}>
+          <Image
+            src="/prodogo2.png"
+            alt="Prodogo Logo"
+            layout="fill"
+            objectFit="contain"
+          />
+        </Box>
+        <Typography variant="h2" component="h1" sx={{ color: '#8FBFF8', fontSize: '3rem', fontWeight: 'bold'}}>
+          Create an Account
+        </Typography>
+      </Box>
+      <Box component="form" onSubmit={handleRegisterSubmit} sx={{ width: '100%', maxWidth: 400 }}>
+        <StyledTextField
+          fullWidth
+          label="Name"
+          variant="outlined"
+          margin="normal"
+          value={registerName}
+          onChange={(e) => setRegisterName(e.target.value)}
+          required
+        />
+        <StyledTextField
+          fullWidth
+          label="Email"
+          variant="outlined"
+          margin="normal"
+          type="email"
+          value={registerEmail}
+          onChange={(e) => setRegisterEmail(e.target.value)}
+          required
+        />
+        <StyledTextField
+          fullWidth
+          label="Password"
+          variant="outlined"
+          margin="normal"
+          type="password"
+          value={registerPassword}
+          onChange={(e) => setRegisterPassword(e.target.value)}
+          required
+          helperText="Password must be at least 8 characters."
+        />
+        <StyledTextField
+          fullWidth
+          label="Confirm Password"
+          variant="outlined"
+          margin="normal"
+          type="password"
+          value={registerConfirmPassword}
+          onChange={(e) => setRegisterConfirmPassword(e.target.value)}
+          required
+        />
+        <StyledButton
+          fullWidth
+          type="submit"
+          disabled={loading}
+          sx={{ marginTop: 2 }}
+        >
+          {loading ? "Registering..." : "Register"}
+        </StyledButton>
+      </Box>
+      <Typography variant="body2" align="center" sx={{ marginTop: 2 }}>
+        Already have an account?{" "}
+        <Button color="primary" onClick={handleNavigateToSignIn}>
+          Sign In
+        </Button>
+      </Typography>
+      <Snackbar open={openSnackbar} autoHideDuration={6000} onClose={handleSnackbarClose}>
+        <Alert onClose={handleSnackbarClose} severity={snackbarSeverity} sx={{ width: "100%" }}>
+          {snackbarMessage}
+        </Alert>
+      </Snackbar>
+    </RegisterContainer>
+  );
 }

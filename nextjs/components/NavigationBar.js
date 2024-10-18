@@ -4,49 +4,74 @@ import {
   Toolbar,
   Typography,
   Button,
-  Menu,
-  MenuItem,
   Box,
-  ListItemIcon,
 } from "@mui/material";
 import { useRouter } from "next/router";
 import Link from "next/link";
-import FunctionsIcon from "@mui/icons-material/Functions";
-import Divider from "@mui/material/Divider";
-import PersonIcon from "@mui/icons-material/Person";
+import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
+import LogoutIcon from '@mui/icons-material/Logout';
 import useBearStore from "@/store/useBearStore";
+import UserDisplay from "./UserDisplay";
 
 const NavigationLayout = ({ children }) => {
   const router = useRouter();
   const appName = useBearStore((state) => state.appName);
+  const [user, setUser] = React.useState(null);
+
+  React.useEffect(() => {
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
+    }
+  }, []);
+
+  const handleAuthClick = () => {
+    if (user) {
+      // Handle logout
+      localStorage.removeItem('user');
+      setUser(null);
+      router.push('/signin');
+    } else {
+      router.push("/register");
+    }
+  };
 
   return (
     <>
-      <AppBar position="sticky" sx={{ backgroundColor: "#ff5e15" }}>
+      <AppBar position="sticky" sx={{ backgroundColor: "#d6e7f9" }}>
         <Toolbar>
           <Link href={"/"}>
-            <FunctionsIcon sx={{ color: "#ffffff" }} fontSize="large" />
+            <img src={'https://i.postimg.cc/x13gF3Dk/prodogo2.png'} alt="Logo" width="30" height="30"/>
           </Link>
+          
           <Typography
             variant="body1"
             sx={{
               fontSize: "22px",
               fontWeight: 500,
-              color: "#ffffff",
+              color: "#053871",
               padding: "0 10px",
               fontFamily: "Prompt",
             }}>
             {appName}
-          </Typography>
-          <NavigationLink href="/page1" label="Page1" />
+          </Typography> 
+
+          <NavigationLink href="/products" label="Products" />
+          <NavigationLink href="/search" label="Search" />
+          <NavigationLink href="/dashboard" label="Dashboard" />
           <div style={{ flexGrow: 1 }} />
-          <Button
-            color="#ffffff"
-            onClick={() => {
-              router.push("/page2");
-            }}>
-            <PersonIcon />
-          </Button>
+
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <UserDisplay />
+            <Button
+              color="inherit"
+              onClick={handleAuthClick}
+              startIcon={user ? <LogoutIcon sx={{ color: "#053871" }} /> : <PersonOutlineIcon sx={{ color: "#053871" }} />}
+              sx={{ color: "#053871" }} 
+            >
+              {user ? "Logout" : "Sign In"}
+            </Button>
+          </Box>
         </Toolbar>
       </AppBar>
       <main>{children}</main>
@@ -60,14 +85,13 @@ const NavigationLink = ({ href, label }) => {
       <Typography
         variant="body1"
         sx={{
-          fontSize: "14px",
+          fontSize: "16px",
           fontWeight: 500,
-          // textTransform: "uppercase",
-          color: "#fff",
-          padding: "0 10px", // Add padding on left and right
+          color: "#053871",
+          padding: "0 10px",
         }}>
         {label}
-      </Typography>{" "}
+      </Typography>
     </Link>
   );
 };
